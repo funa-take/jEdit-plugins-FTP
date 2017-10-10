@@ -68,6 +68,7 @@ public class ConnectionManager
 	 */
 	protected static HashMap<String, ConnectionInfo> logins;
 	private static HashMap<String, String> passwords;
+	private static HashMap<String, String> serverEncoding;
 	private static HashMap<String, String> passphrases;
 	/** a 256 byte SHA1 hash of the master password, actually */
 	static byte[] masterKey = null;
@@ -102,10 +103,27 @@ public class ConnectionManager
 		restoredPasswords = false;
 		passwords.clear();
 		passphrases.clear();
+		serverEncoding.clear();
 		logins.clear();
 		client = null;
 	} //}}}
 
+	
+	//{{{ getEncoding() method
+	protected static String getServerEncoding(String hostInfo)
+	{
+		if (!restoredPasswords)
+			loadPasswords();
+		return serverEncoding.get(hostInfo);
+	} //}}}
+
+	//{{{ setEncoding() method
+	protected static void setServerEncoding(String hostInfo, String encoding)
+	{
+		serverEncoding.put(hostInfo, encoding);
+		savePasswords();
+	} //}}}
+	
 	//{{{ getPassword() method
 	protected static String getPassword(String hostInfo)
 	{
@@ -308,6 +326,7 @@ public class ConnectionManager
 					new ByteArrayInputStream( objectBuffer,0,objectBuffer.length )));
 			passwords = (HashMap<String, String>)ois.readObject();
 			passphrases = (HashMap<String, String>)ois.readObject();
+			serverEncoding = (HashMap<String, String>)ois.readObject();
 			Log.log(Log.DEBUG, ConnectionManager.class, "Passwords loaded: " + passwords.size());
 			Log.log(Log.DEBUG, ConnectionManager.class, "Passphrases loaded: " + passphrases.size());
 			restoredPasswords = true;
@@ -381,6 +400,7 @@ public class ConnectionManager
 			oos = new ObjectOutputStream(baos);
 			oos.writeObject(passwords);
 			oos.writeObject(passphrases);
+			oos.writeObject(serverEncoding);
 			byte[] objectBuffer = baos.toByteArray();
 
 			Cipher c = getCipher(Cipher.ENCRYPT_MODE);
@@ -483,6 +503,13 @@ public class ConnectionManager
 
 		ConnectionInfo info = new ConnectionInfo(secure, host, port,
 			dialog.getUser(), dialog.getPassword(), dialog.getPrivateKeyFilename() );
+		
+		// funa edit
+		if (!secure) {
+			String serverEncoding = dialog.getServerEncoding(); 
+			info.setServerEncoding(serverEncoding);
+			setServerEncoding(host+":"+port+"."+dialog.getUser(), serverEncoding);
+		}
 
 		// Should this be stored in properties?
 		if (secure && dialog.getPrivateKeyFilename() != null)
@@ -585,6 +612,7 @@ public class ConnectionManager
 		logins.clear();
 		passwords.clear();
 		passphrases.clear();
+		serverEncoding.clear();
 		masterKey = null;
 		restoredPasswords=false;
 		client = null;
@@ -599,6 +627,7 @@ public class ConnectionManager
 		logins = new HashMap<String, ConnectionInfo>();
 		passwords = new HashMap<String, String>();
 		passphrases = new HashMap<String, String>();
+		serverEncoding = new HashMap<String, String>();
 
 		String settingsDirectory = FtpPlugin.getPluginHome(FtpPlugin.class).toString();
 

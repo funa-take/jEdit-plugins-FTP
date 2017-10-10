@@ -67,6 +67,8 @@ login.storePassword=Save Password
 login.useProxy=Connect using proxy
 login.useProxyHttp=Connect using proxy (HTTP Proxy only)
 
+# funa edit
+ftp.server-encoding=FTP Server Encoding
 ftp.bad-master-password=Bad Master Password (failed to restore saved passwords)
 ftp.jce.strongkeys.missing=JCE Unlimited Key Strength unavailable. Password saving disabled.
 ftp.cancel-master-password=Saving Passwords disabled. Perhaps you need to "Forget Remote Passwords"? Saved passwords from FTP 1.0.3 and earlier are not readable.

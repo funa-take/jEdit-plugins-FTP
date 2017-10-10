@@ -58,6 +58,9 @@ class FtpConnection extends Connection
 		} else {
 			client = new FtpClient();
 		}
+		
+		// funa edit
+		client.setServerEncoding(info.getServerEncoding());
 
 		client.connect(info.host,info.port);
 

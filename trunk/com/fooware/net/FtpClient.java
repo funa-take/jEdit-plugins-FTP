@@ -43,15 +43,15 @@ import com.fooware.net.proxy.Proxy;
  * @version $Revision: 14855 $
  */
 public class FtpClient {
-
+  
 	public static final int TIMEOUT = 45000;
 	
 	
-
+	
 	//
 	// interface
 	//
-
+	
 	public FtpClient() {}
 	
 	public FtpClient(Proxy proxy) {
@@ -65,14 +65,14 @@ public class FtpClient {
 		String debugString = command;
 		if (command.startsWith("PASS"))
 			debugString = "PASS <password removed for security>";
-
+		
 		debug("sending command", debugString);
 		out.write(command);
 		out.write("\r\n");
 		out.flush();
 		setResponse();
 	}
-
+	
 	/**
 	 * Return the last response received from the FTP server. The response are
 	 * stored in a collection, so repeatedly calling this method will return the
@@ -82,21 +82,21 @@ public class FtpClient {
 	public FtpResponse getResponse() {
 		return response;
 	}
-
+	
 	/**
 	 * Return an enumeration of all the responses received from the FTP server.
 	 */
 	public Enumeration<FtpResponse> getAllResponses() {
 		return responseArchive.elements();
 	}
-
+	
 	/**
 	 * Connect to the server at the host on the default FTP port.
 	 */
 	public void connect(String hostName) throws IOException {
 		connect(hostName, DEFAULT_PORT);
 	}
-
+	
 	/**
 	 * Connect to the server at the host on the port.
 	 */
@@ -107,11 +107,12 @@ public class FtpClient {
 			cmdSocket = new Socket(hostName, port);
 		}
 		cmdSocket.setSoTimeout(TIMEOUT);
-		in = new BufferedReader(new InputStreamReader(cmdSocket.getInputStream()));
-		out = new BufferedWriter(new OutputStreamWriter(cmdSocket.getOutputStream()));
+		// funa edit
+		in = new BufferedReader(new InputStreamReader(cmdSocket.getInputStream(), getServerEncoding()));
+		out = new BufferedWriter(new OutputStreamWriter(cmdSocket.getOutputStream(), getServerEncoding()));
 		setResponse();
 	}
-
+	
 	/**
 	 * USER NAME (USER) <BR>
 	 * The argument field is a Telnet string identifying the user. The user
@@ -131,7 +132,7 @@ public class FtpClient {
 	public void userName(String userName) throws IOException {
 		sendCommand("USER " + userName);
 	}
-
+	
 	/**
 	 * PASSWORD (PASS) <BR>
 	 * The argument field is a Telnet string specifying the user's password.
@@ -146,7 +147,7 @@ public class FtpClient {
 	public void password(String password) throws IOException {
 		sendCommand("PASS " + password);
 	}
-
+	
 	/**
 	 * ACCOUNT (ACCT) <BR>
 	 * The argument field is a Telnet string identifying the user's account. The
@@ -166,7 +167,7 @@ public class FtpClient {
 	public void account(String account) throws IOException {
 		sendCommand("ACCT " + account);
 	}
-
+	
 	/**
 	 * CHANGE WORKING DIRECTORY (CWD) <BR>
 	 * This command allows the user to work with a different directory or
@@ -179,7 +180,7 @@ public class FtpClient {
 	public void changeWorkingDirectory(String path) throws IOException {
 		sendCommand("CWD " + path);
 	}
-
+	
 	/**
 	 * CHANGE TO PARENT DIRECTORY (CDUP) <BR>
 	 * This command is a special case of CWD, and is included to simplify the
@@ -192,7 +193,7 @@ public class FtpClient {
 	public void changeToParentDirectory() throws IOException {
 		sendCommand("CDUP");
 	}
-
+	
 	/**
 	 * STRUCTURE MOUNT (SMNT) This command allows the user to mount a different
 	 * file system data structure without altering his login or accounting
@@ -204,7 +205,7 @@ public class FtpClient {
 	public void structureMount(String path) throws IOException {
 		sendCommand("SMNT " + path);
 	}
-
+	
 	/**
 	 * REINITIALIZE (REIN) <BR>
 	 * This command terminates a USER, flushing all I/O and account information,
@@ -218,7 +219,7 @@ public class FtpClient {
 	public void reinitialize() throws IOException {
 		sendCommand("REIN");
 	}
-
+	
 	/**
 	 * LOGOUT (QUIT) <BR>
 	 * This command terminates a USER and if file transfer is not in progress,
@@ -234,7 +235,7 @@ public class FtpClient {
 	public void logout() throws IOException {
 		sendCommand("QUIT");
 	}
-
+	
 	/**
 	 * DATA PORT (PORT) <BR>
 	 * The argument is a HOST-PORT specification for the data port to be used in
@@ -271,7 +272,7 @@ public class FtpClient {
 		command.append(port % 256);
 		sendCommand(command.toString());
 	}
-
+	
 	/**
 	 * PASSIVE (PASV) <BR>
 	 * This command requests the server-DTP to "listen" on a data port (which is
@@ -286,16 +287,16 @@ public class FtpClient {
 		FtpResponse resp = getResponse();
 		if (!resp.isPositiveCompletion()) {
 			Log.log(Log.ERROR, this, Thread.currentThread()
-					+ ": Couldn't set passive, trying data port");
+			  + ": Couldn't set passive, trying data port");
 			dataPort();
 			return;
 		}
-
+		
 		try {
 			String message = resp.getMessage();
 			int bound_r = message.lastIndexOf(')');
 			int bound_l = message.lastIndexOf('(', bound_r - 1) + 1;
-
+			
 			String remoteAddr = message.substring(bound_l, bound_r);
 			int comma1 = remoteAddr.lastIndexOf(',');
 			int port = Integer.parseInt(remoteAddr.substring(comma1 + 1));
@@ -315,7 +316,7 @@ public class FtpClient {
 			return;
 		}
 	}
-
+	
 	/**
 	 * REPRESENTATION TYPE (TYPE) <BR>
 	 * The argument specifies the representation type as described in the
@@ -364,21 +365,21 @@ public class FtpClient {
 			sendCommand("TYPE " + type + ' ' + format);
 		}
 	}
-
+	
 	/**
 	 * @see #representationType(char, char)
 	 */
 	public void representationType(char type) throws IOException {
 		representationType(type, NON_PRINT_FORMAT);
 	}
-
+	
 	/**
 	 * Special case of specifying the local byte size.
 	 */
 	public void representationType(int size) throws IOException {
 		sendCommand("TYPE L " + size);
 	}
-
+	
 	/**
 	 * FILE STRUCTURE (STRU) <BR>
 	 * The argument is a single Telnet character code specifying file structure
@@ -404,7 +405,7 @@ public class FtpClient {
 	public void structure(char structure) throws IOException {
 		sendCommand("STRU " + structure);
 	}
-
+	
 	/**
 	 * TRANSFER MODE (MODE) <BR>
 	 * The argument is a single Telnet character code specifying the data
@@ -431,7 +432,7 @@ public class FtpClient {
 	public void transferMode(char mode) throws IOException {
 		sendCommand("MODE " + mode);
 	}
-
+	
 	/**
 	 * RETRIEVE (RETR) <BR>
 	 * This command causes the server-DTP to transfer a copy of the file,
@@ -449,19 +450,20 @@ public class FtpClient {
 		InputStream istr = getRetrieveStream(path);
 		if (istr == null)
 			return null;
-
-		InputStreamReader in = new InputStreamReader(istr);
+		
+		// funa edit
+		InputStreamReader in = new InputStreamReader(istr, getServerEncoding());
 		return new FtpReader(in, this);
 	}
-
+	
 	public FtpInputStream retrieveStream(String path) throws IOException {
 		InputStream istr = getRetrieveStream(path);
 		if (istr == null)
 			return null;
-
+		
 		return new FtpInputStream(istr, this);
 	}
-
+	
 	protected InputStream getRetrieveStream(String path) throws IOException {
 		sendCommand("RETR " + path);
 		if (!getResponse().isPositivePreliminary()) {
@@ -469,7 +471,7 @@ public class FtpClient {
 		}
 		return getTransferSocket().getInputStream();
 	}
-
+	
 	/**
 	 * STORE (STOR) <BR>
 	 * This command causes the server-DTP to accept the data transferred via the
@@ -489,19 +491,20 @@ public class FtpClient {
 		OutputStream ostr = getStoreStream(path);
 		if (ostr == null)
 			return null;
-
-		OutputStreamWriter out = new OutputStreamWriter(ostr);
+		
+		// funa edit
+		OutputStreamWriter out = new OutputStreamWriter(ostr, getServerEncoding());
 		return new FtpWriter(out, this);
 	}
-
+	
 	public FtpOutputStream storeStream(String path) throws IOException {
 		OutputStream ostr = getStoreStream(path);
 		if (ostr == null)
 			return null;
-
+		
 		return new FtpOutputStream(ostr, this);
 	}
-
+	
 	protected OutputStream getStoreStream(String path) throws IOException {
 		sendCommand("STOR " + path);
 		if (!getResponse().isPositivePreliminary()) {
@@ -509,7 +512,7 @@ public class FtpClient {
 		}
 		return getTransferSocket().getOutputStream();
 	}
-
+	
 	/**
 	 * STORE UNIQUE (STOU) <BR>
 	 * This command behaves like STOR except that the resultant file is to be
@@ -526,19 +529,20 @@ public class FtpClient {
 		OutputStream ostr = getStoreUniqueStream();
 		if (ostr == null)
 			return null;
-
-		OutputStreamWriter out = new OutputStreamWriter(ostr);
+		
+		// funa edit
+		OutputStreamWriter out = new OutputStreamWriter(ostr, getServerEncoding());
 		return new FtpWriter(out, this);
 	}
-
+	
 	public FtpOutputStream storeUniqueStream() throws IOException {
 		OutputStream ostr = getStoreUniqueStream();
 		if (ostr == null)
 			return null;
-
+		
 		return new FtpOutputStream(ostr, this);
 	}
-
+	
 	protected OutputStream getStoreUniqueStream() throws IOException {
 		sendCommand("STOU");
 		if (!getResponse().isPositivePreliminary()) {
@@ -546,7 +550,7 @@ public class FtpClient {
 		}
 		return getTransferSocket().getOutputStream();
 	}
-
+	
 	/**
 	 * APPEND (with create) (APPE) <BR>
 	 * This command causes the server-DTP to accept the data transferred via the
@@ -565,19 +569,20 @@ public class FtpClient {
 		OutputStream ostr = getAppendStream(path);
 		if (ostr == null)
 			return null;
-
-		OutputStreamWriter out = new OutputStreamWriter(ostr);
+		
+		// funa edit
+		OutputStreamWriter out = new OutputStreamWriter(ostr, getServerEncoding());
 		return new FtpWriter(out, this);
 	}
-
+	
 	public FtpOutputStream appendStream(String path) throws IOException {
 		OutputStream ostr = getAppendStream(path);
 		if (ostr == null)
 			return null;
-
+		
 		return new FtpOutputStream(ostr, this);
 	}
-
+	
 	protected OutputStream getAppendStream(String path) throws IOException {
 		sendCommand("APPE " + path);
 		if (!getResponse().isPositivePreliminary()) {
@@ -585,7 +590,7 @@ public class FtpClient {
 		}
 		return getTransferSocket().getOutputStream();
 	}
-
+	
 	/**
 	 * ALLOCATE (ALLO) <BR>
 	 * This command may be required by some servers to reserve sufficient
@@ -607,14 +612,14 @@ public class FtpClient {
 	public void allocate(int size, int recSize) throws IOException {
 		sendCommand("ALLO " + size + " R " + recSize);
 	}
-
+	
 	/**
 	 * @see #allocate(int, int)
 	 */
 	public void allocate(int size) throws IOException {
 		sendCommand("ALLO " + size);
 	}
-
+	
 	/**
 	 * RESTART (REST) <BR>
 	 * The argument field represents the server marker at which file transfer is
@@ -627,7 +632,7 @@ public class FtpClient {
 	public void restart(String marker) throws IOException {
 		sendCommand("REST " + marker);
 	}
-
+	
 	/**
 	 * RENAME FROM (RNFR) <BR>
 	 * This command specifies the old pathname of the file which is to be
@@ -640,7 +645,7 @@ public class FtpClient {
 	public void renameFrom(String path) throws IOException {
 		sendCommand("RNFR " + path);
 	}
-
+	
 	/**
 	 * RENAME TO (RNTO) <BR>
 	 * This command specifies the new pathname of the file specified in the
@@ -653,7 +658,7 @@ public class FtpClient {
 	public void renameTo(String path) throws IOException {
 		sendCommand("RNTO " + path);
 	}
-
+	
 	/**
 	 * ABORT (ABOR) <BR>
 	 * This command tells the server to abort the previous FTP service command
@@ -677,7 +682,7 @@ public class FtpClient {
 	public void abort() throws IOException {
 		sendCommand("ABOR");
 	}
-
+	
 	/**
 	 * DELETE (DELE) This command causes the file specified in the pathname to
 	 * be deleted at the server site. If an extra level of protection is desired
@@ -688,7 +693,7 @@ public class FtpClient {
 	public void delete(String path) throws IOException {
 		sendCommand("DELE " + path);
 	}
-
+	
 	/**
 	 * REMOVE DIRECTORY (RMD) <BR>
 	 * This command causes the directory specified in the pathname to be removed
@@ -699,7 +704,7 @@ public class FtpClient {
 	public void removeDirectory(String path) throws IOException {
 		sendCommand("RMD " + path);
 	}
-
+	
 	/**
 	 * MAKE DIRECTORY (MKD) <BR>
 	 * This command causes the directory specified in the pathname to be created
@@ -710,7 +715,7 @@ public class FtpClient {
 	public void makeDirectory(String path) throws IOException {
 		sendCommand("MKD " + path);
 	}
-
+	
 	/**
 	 * PRINT WORKING DIRECTORY (PWD) <BR>
 	 * This command causes the name of the current working directory to be
@@ -720,7 +725,7 @@ public class FtpClient {
 	public void printWorkingDirectory() throws IOException {
 		sendCommand("PWD");
 	}
-
+	
 	/**
 	 * LIST (LIST) <BR>
 	 * This command causes a list to be sent from the server to the passive DTP.
@@ -744,30 +749,31 @@ public class FtpClient {
 		InputStream istr = getListStream(path);
 		if (istr == null)
 			return null;
-
-		InputStreamReader in = new InputStreamReader(istr);
+		
+		// funa edit
+		InputStreamReader in = new InputStreamReader(istr, getServerEncoding());
 		return new FtpReader(in, this);
 	}
-
+	
 	/**
 	 * @see #list(String)
 	 */
 	public FtpReader list() throws IOException {
 		return list(null);
 	}
-
+	
 	public FtpInputStream listStream(String path) throws IOException {
 		InputStream istr = getListStream(path);
 		if (istr == null)
 			return null;
-
+		
 		return new FtpInputStream(istr, this);
 	}
-
+	
 	public FtpInputStream listStream() throws IOException {
 		return listStream(null);
 	}
-
+	
 	protected InputStream getListStream(String path) throws IOException {
 		if (path == null) {
 			sendCommand("LIST");
@@ -779,7 +785,7 @@ public class FtpClient {
 		}
 		return getTransferSocket().getInputStream();
 	}
-
+	
 	/**
 	 * NAME LIST (NLST) This command causes a directory listing to be sent from
 	 * server to user site. The pathname should specify a directory or other
@@ -803,30 +809,31 @@ public class FtpClient {
 		InputStream istr = getNameListStream(path);
 		if (istr == null)
 			return null;
-
-		InputStreamReader in = new InputStreamReader(istr);
+		
+		// funa edit
+		InputStreamReader in = new InputStreamReader(istr, getServerEncoding());
 		return new FtpReader(in, this);
 	}
-
+	
 	/**
 	 * @see #nameList(String)
 	 */
 	public FtpReader nameList() throws IOException {
 		return nameList(null);
 	}
-
+	
 	public FtpInputStream nameListStream(String path) throws IOException {
 		InputStream istr = getNameListStream(path);
 		if (istr == null)
 			return null;
-
+		
 		return new FtpInputStream(istr, this);
 	}
-
+	
 	public FtpInputStream nameListStream() throws IOException {
 		return nameListStream(null);
 	}
-
+	
 	protected InputStream getNameListStream(String path) throws IOException {
 		if (path == null) {
 			sendCommand("NLIST");
@@ -838,7 +845,7 @@ public class FtpClient {
 		}
 		return getTransferSocket().getInputStream();
 	}
-
+	
 	/**
 	 * SITE PARAMETERS (SITE) <BR>
 	 * This command is used by the server to provide services specific to his
@@ -851,7 +858,7 @@ public class FtpClient {
 	public void siteParameters(String param) throws IOException {
 		sendCommand("SITE " + param);
 	}
-
+	
 	/**
 	 * SYSTEM (SYST) <BR>
 	 * This command is used to find out the type of operating system at the
@@ -862,7 +869,7 @@ public class FtpClient {
 	public void system() throws IOException {
 		sendCommand("SYST");
 	}
-
+	
 	/**
 	 * STATUS (STAT) <BR>
 	 * This command shall cause a status response to be sent over the control
@@ -887,14 +894,14 @@ public class FtpClient {
 			sendCommand("STAT " + path);
 		}
 	}
-
+	
 	/**
 	 * @see #status(String)
 	 */
 	public void status() throws IOException {
 		status(null);
 	}
-
+	
 	/**
 	 * HELP (HELP) <BR>
 	 * This command shall cause the server to send helpful information regarding
@@ -913,14 +920,14 @@ public class FtpClient {
 			sendCommand("HELP " + arg);
 		}
 	}
-
+	
 	/**
 	 * @see #help(String)
 	 */
 	public void help() throws IOException {
 		help(null);
 	}
-
+	
 	/**
 	 * NOOP (NOOP) <BR>
 	 * This command does not affect any parameters or previously entered
@@ -931,30 +938,30 @@ public class FtpClient {
 	public void noOp() throws IOException {
 		sendCommand("NOOP");
 	}
-
+	
 	public static final int DEFAULT_PORT = 21;
-
+	
 	public static final char ASCII_TYPE = 'A';
 	public static final char IMAGE_TYPE = 'I';
 	public static final char EBCDIC_TYPE = 'E';
-
+	
 	public static final char LOCAL_FORMAT = 'L';
 	public static final char NON_PRINT_FORMAT = 'N';
 	public static final char TELNET_EFFECTORS_FORMAT = 'T';
 	public static final char CARRIAGE_CONTROL_FORMAT = 'C';
-
+	
 	public static final char FILE_STRUCTURE = 'F';
 	public static final char RECORD_STRUCTURE = 'R';
 	public static final char PAGE_STRUCTURE = 'P';
-
+	
 	public static final char STREAM_MODE = 'S';
 	public static final char BLOCK_MODE = 'B';
 	public static final char COMPRESSED_MODE = 'C';
-
+	
 	//
 	// framework
 	//
-
+	
 	/**
 	 * Set the current response. Also, add the response to the archive.
 	 */
@@ -963,7 +970,7 @@ public class FtpClient {
 		responseArchive.addElement(response);
 		debug("received response", response);
 	}
-
+	
 	/**
 	 * Called by the FtpReader and FtpWriter classes when they are explicitly
 	 * closed.
@@ -975,43 +982,57 @@ public class FtpClient {
 			setResponse();
 		}
 	}
-
+	
 	//
 	// implementation
 	//
-
+	
 	private void debug(Object heading, Object message) {
 		Log.log(Log.DEBUG, this, Thread.currentThread() + ": " + heading + ": "+ message);
 	}
-
+	
 	private Socket getTransferSocket() throws IOException {
 		if (dataXfrSocket != null) {
 			dataXfrSocket.close();
 			dataXfrSocket = null;
 		}
-
+		
 		if (passiveSocket != null) {
 			dataXfrSocket = passiveSocket;
 		} else if (dataSocket != null) {
 			dataXfrSocket = dataSocket.accept();
 			dataXfrSocket.setSoTimeout(TIMEOUT);
 		}
-
+		
 		return dataXfrSocket;
 	}
 
+	// funa edit
+	public String getServerEncoding() {
+	  if (serverEncoding == null || "".equals(serverEncoding)) {
+			return  System.getProperty("file.encoding");
+		} else {
+			return this.serverEncoding;
+		}
+	}
+	public void setServerEncoding(String serverEncoding) {
+	  this.serverEncoding = serverEncoding;
+	}
+	
 	//private boolean useReaderWriter; // temporary commented as useless (voituk)
-
+	
 	private BufferedReader in;
 	private BufferedWriter out;
-
+	
 	private Socket cmdSocket;
 	private ServerSocket dataSocket;
 	private Socket dataXfrSocket;
 	private Socket passiveSocket;
-
+	
 	private FtpResponse response;
 	private Vector<FtpResponse> responseArchive = new Vector<FtpResponse>();
-
+	
 	private Proxy proxy;
+	private String serverEncoding;
+	
 }

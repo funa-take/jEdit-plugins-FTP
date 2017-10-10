@@ -65,22 +65,22 @@ public class LoginDialog extends EnhancedDialog implements ActionListener
 		setContentPane(content);
 		
 		content.add(createFieldPanel(secure,host,user,password));
-
+		
 		useProxy = new JCheckBox(
-				jEdit.getProperty(secure ? "login.useProxy" : "login.useProxyHttp"), 
-				jEdit.getBooleanProperty("vfs.ftp.useProxy", false)
-		);
+			jEdit.getProperty(secure ? "login.useProxy" : "login.useProxyHttp"), 
+			jEdit.getBooleanProperty("vfs.ftp.useProxy", false)
+			);
 		
 		if(!secure) {
 			passive = new JCheckBox(jEdit.getProperty("login.passive"),
 				jEdit.getBooleanProperty("vfs.ftp.passive"));
 			
 			passive.addItemListener(new ItemListener() {
-				public void itemStateChanged(ItemEvent e) {
-					useProxy.setEnabled(passive.isSelected());
-				}
+					public void itemStateChanged(ItemEvent e) {
+						useProxy.setEnabled(passive.isSelected());
+					}
 			});
-
+			
 			useProxy.setEnabled(passive.isSelected());
 			content.add(passive);
 		}
@@ -149,26 +149,29 @@ public class LoginDialog extends EnhancedDialog implements ActionListener
 		{
 			host = hostField.getText();
 			user = userField.getText();
+			if (!secure) 
+				serverEncoding = serverEncodingField.getText();
+			
 			if (privateKeyField!=null && privateKeyField.getText().length() > 0) {
 				//try{
-					//SshPrivateKeyFile file = SshPrivateKeyFile.parse(new File(privateKeyField.getText()));
-					//if (file.isPassphraseProtected()) {
-					//	Log.log(Log.DEBUG, this, "Key File is password protected.");
-					//	PassphraseDialog ppd = new PassphraseDialog(jEdit.getActiveView());
-					//	Point p  = this.getLocation();
-					//	Dimension s = this.getSize();
-					//	Dimension ppds = ppd.getSize();
-					//	ppd.setLocation((int)(p.x + s.width/2 - ppds.width/2), (int)(p.y + s.height/2 - ppds.height/2));
-					//	ppd.setMessage(jEdit.getProperty("login.privatekeypassword"));
-					//	ppd.setVisible(true);
-					//	if (ppd.isCancelled())
-					//		return;
-					//	privateKey = file.toPrivateKey(new String(ppd.getPassphrase()));
-					//} else {
-					//	privateKey = file.toPrivateKey(null);
-					//}
-					privateKeyFilename = privateKeyField.getText();
-					
+				//SshPrivateKeyFile file = SshPrivateKeyFile.parse(new File(privateKeyField.getText()));
+				//if (file.isPassphraseProtected()) {
+				//	Log.log(Log.DEBUG, this, "Key File is password protected.");
+				//	PassphraseDialog ppd = new PassphraseDialog(jEdit.getActiveView());
+				//	Point p  = this.getLocation();
+				//	Dimension s = this.getSize();
+				//	Dimension ppds = ppd.getSize();
+				//	ppd.setLocation((int)(p.x + s.width/2 - ppds.width/2), (int)(p.y + s.height/2 - ppds.height/2));
+				//	ppd.setMessage(jEdit.getProperty("login.privatekeypassword"));
+				//	ppd.setVisible(true);
+				//	if (ppd.isCancelled())
+				//		return;
+				//	privateKey = file.toPrivateKey(new String(ppd.getPassphrase()));
+				//} else {
+				//	privateKey = file.toPrivateKey(null);
+				//}
+				privateKeyFilename = privateKeyField.getText();
+				
 				//} catch (InvalidSshKeyException iske) {
 				//	GUIUtilities.error(this,"vfs.sftp.invalid-privatekey",new Object[] {iske.getMessage()});
 				//	return;
@@ -199,6 +202,12 @@ public class LoginDialog extends EnhancedDialog implements ActionListener
 	public boolean isOK()
 	{
 		return isOK;
+	} //}}}
+	
+	//{{{ getServerEncoding() method
+	public String getServerEncoding()
+	{
+		return serverEncoding;
 	} //}}}
 	
 	//{{{ getHost() method
@@ -260,15 +269,17 @@ public class LoginDialog extends EnhancedDialog implements ActionListener
 	private boolean secure;
 	private JButton ok;
 	private JButton cancel;
+	private JTextField serverEncodingField;
+	private String serverEncoding;
 	
 	//{{{ createFieldPanel() method
 	private JPanel createFieldPanel(boolean secure, String host, String user, String password)
 	{
 		JPanel panel = new JPanel(new VariableGridLayout(
-		VariableGridLayout.FIXED_NUM_COLUMNS,2,6,6));
+			VariableGridLayout.FIXED_NUM_COLUMNS,2,6,6));
 		
 		JLabel label = new JLabel(jEdit.getProperty("login.host"),
-		SwingConstants.RIGHT);
+			SwingConstants.RIGHT);
 		panel.add(label);
 		
 		hostField = new HistoryTextField(secure ? "sftp.host" : "ftp.host");
@@ -281,7 +292,7 @@ public class LoginDialog extends EnhancedDialog implements ActionListener
 		panel.add(hostField);
 		
 		label = new JLabel(jEdit.getProperty("login.user"),
-		SwingConstants.RIGHT);
+			SwingConstants.RIGHT);
 		panel.add(label);
 		
 		userField = new HistoryTextField("ftp.user");
@@ -292,7 +303,7 @@ public class LoginDialog extends EnhancedDialog implements ActionListener
 		panel.add(userField);
 		
 		label = new JLabel(jEdit.getProperty("login.password"),
-		SwingConstants.RIGHT);
+			SwingConstants.RIGHT);
 		panel.add(label);
 		
 		passwordField = new JPasswordField(password,20);
@@ -313,6 +324,12 @@ public class LoginDialog extends EnhancedDialog implements ActionListener
 			privateKeySelect.addActionListener(new PrivateKeySelectActionListener(this));
 			privateKeyBox.add(privateKeySelect);
 			panel.add(privateKeyBox);
+		} else {
+			label = new JLabel(jEdit.getProperty("ftp.server-encoding"),
+				SwingConstants.RIGHT);
+			panel.add(label);
+			serverEncodingField = new JTextField();
+			panel.add(serverEncodingField);
 		}
 		checkKey();
 		
@@ -325,7 +342,7 @@ public class LoginDialog extends EnhancedDialog implements ActionListener
 		String host = hostField.getText();
 		String user = userField.getText();
 		if(host.indexOf(":") == -1)
-				host = host + ":" + FtpVFS.getDefaultPort(secure);
+			host = host + ":" + FtpVFS.getDefaultPort(secure);
 		String key = secure ? ConnectionManager.getStoredFtpKey(host, user) : null;
 		String pass = ConnectionManager.getPassword(host+"."+user);
 		if (secure)
@@ -334,11 +351,14 @@ public class LoginDialog extends EnhancedDialog implements ActionListener
 				privateKeyField.setText(key);
 			else
 				privateKeyField.setText("");
+		} else {
+			String serverEncoding = ConnectionManager.getServerEncoding(host+"."+user);
+			serverEncodingField.setText(serverEncoding);
 		}
 		
 		if (pass != null)
 			passwordField.setText(pass);
-
+		
 	}
 	//}}}
 	
@@ -367,7 +387,7 @@ public class LoginDialog extends EnhancedDialog implements ActionListener
 			}
 		}
 	} //}}}
-
+	
 	//{{{ class FieldCompletionListener
 	class FieldCompletionListener implements DocumentListener
 	{
