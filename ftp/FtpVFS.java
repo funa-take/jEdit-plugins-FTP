@@ -42,11 +42,11 @@ import org.gjt.sp.util.ThreadUtilities;
 //}}}
 
 /** {{{ FTP (and SFTP) Virtual File System
-* 
-* @author Slava Pestov
-* @author Vadim Voituk
-* @version $Id: FtpVFS.java 23407 2014-02-07 22:54:25Z ezust $
-*/
+ * 
+ * @author Slava Pestov
+ * @author Vadim Voituk
+ * @version $Id: FtpVFS.java 23407 2014-02-07 22:54:25Z ezust $
+ */
 public class FtpVFS extends VFS
 {
 	public static final String FTP_PROTOCOL = "ftp";
@@ -79,8 +79,8 @@ public class FtpVFS extends VFS
 	public static String[] getExtendedAttributes(boolean secure)
 	{
 		return secure 
-			? new String[] { EA_SIZE, EA_MODIFIED,  EA_TYPE }
-			: new String[] { EA_SIZE, EA_STATUS, EA_TYPE };
+		? new String[] { EA_SIZE, EA_MODIFIED,  EA_TYPE }
+		: new String[] { EA_SIZE, EA_STATUS, EA_TYPE };
 	} //}}}
 	
 	//{{{ getDefaultPort() method
@@ -103,8 +103,8 @@ public class FtpVFS extends VFS
 		// server' commands to detect that the path is in fact a
 		// directory
 		return getProtocol(secure) + "://" + newSession.info.getUser()
-			+ "@" + newSession.info.getHost()
-			+ ":" + newSession.info.getPort() + "/~/";
+		+ "@" + newSession.info.getHost()
+		+ ":" + newSession.info.getPort() + "/~/";
 	} //}}}
 	
 	//{{{ getFileName() method
@@ -323,8 +323,8 @@ public class FtpVFS extends VFS
 			
 			// since _getDirectoryEntry() is always called
 			// before the file is loaded (this is undocumented,
-				// but true, because BufferIORequest needs to know
-				// the size of the file being loaded) we can
+			// but true, because BufferIORequest needs to know
+			// the size of the file being loaded) we can
 			// check if the path name in the session is the
 			// path this method was passed.
 			if(address.toString().equals(path))
@@ -340,7 +340,7 @@ public class FtpVFS extends VFS
 				}
 			}
 		}
-
+		
 		
 		return dirEntry;
 	} //}}}
@@ -368,7 +368,12 @@ public class FtpVFS extends VFS
 		DirectoryCache.clearCachedDirectory(getParentOfPath(url));
 		VFSManager.sendVFSUpdate(this,url,true);
 		
-		return returnValue;
+		if (!returnValue) {
+			Log.log(Log.ERROR, this, "Can't delete directory " + address.getPath());
+		}
+		
+		// falseが返ると固まるため, trueを返す。
+		return true;
 	} //}}}
 	
 	//{{{ _rename() method
@@ -444,15 +449,15 @@ public class FtpVFS extends VFS
 	//{{{ _finishTwoStageSave() method
 	public void _finishTwoStageSave(Object _session, Buffer buffer, String path,
 		Component comp) throws IOException {
-		Log.log(Log.DEBUG, "Run FtpVFS._finishTwoStageSave()", path);
-		Connection session = getConnection(_session);
-		
-		FtpAddress address = new FtpAddress(path);
-		
-		// Restore permissions
-		int permissions = buffer.getIntegerProperty(PERMISSIONS_PROPERTY,0);
-		if(permissions != 0)
-			session.chmod(address.getPath(),permissions);
+	Log.log(Log.DEBUG, "Run FtpVFS._finishTwoStageSave()", path);
+	Connection session = getConnection(_session);
+	
+	FtpAddress address = new FtpAddress(path);
+	
+	// Restore permissions
+	int permissions = buffer.getIntegerProperty(PERMISSIONS_PROPERTY,0);
+	if(permissions != 0)
+		session.chmod(address.getPath(),permissions);
 	} //}}}
 	
 	//{{{ _saveComplete()
@@ -471,17 +476,17 @@ public class FtpVFS extends VFS
 	/**{@inheritDoc}*/
 	@Override
 	public void _backup(Object session, String path, Component comp) throws IOException {
-
+		
 		// Since jEdit 5.0pre1 there is a default implementation,
 		// which was empty before. 
 		if (StandardUtilities.compareStrings(jEdit.getBuild(),
-				"05.00.00.00", false) > 0)
+			"05.00.00.00", false) > 0)
 		{
 			// jEdit 5
 			super._backup(session, path, comp);
 			return;
 		}
-
+		
 		Buffer buffer = jEdit.getBuffer(path);
 		if (buffer == null)
 			return;
@@ -502,7 +507,7 @@ public class FtpVFS extends VFS
 		
 		ThreadUtilities.runInBackground( new LocalFileSaveTask(f, buffer.getText(), buffer.getStringProperty(JEditBuffer.ENCODING)) );
 	}//}}}
-
+	
 	//{{{ getBackupFilePath()
 	/**
 	 * @param path
@@ -582,4 +587,5 @@ public class FtpVFS extends VFS
 	} //}}}
 	
 	//}}}
-} //}}}
+	} //}}}
+	

@@ -30,8 +30,9 @@ import ftp.FtpVFS.FtpDirectoryEntry;
 import java.io.*;
 import java.util.*;
 import java.util.regex.*;
-import org.gjt.sp.jedit.jEdit;
 import org.gjt.sp.jedit.MiscUtilities;
+import org.gjt.sp.jedit.io.VFSFile;
+import org.gjt.sp.jedit.jEdit;
 import org.gjt.sp.util.Log;
 //}}}
 
@@ -265,9 +266,27 @@ class FtpConnection extends Connection
 
 	boolean removeDirectory(String path) throws IOException
 	{
-		client.removeDirectory(path);
-		return client.getResponse().isPositiveCompletion();
+		// client.removeDirectory(path);
+		// return client.getResponse().isPositiveCompletion();
+		return recursiveDelete(path);
 	}
+	
+	private boolean recursiveDelete(String path) throws IOException {
+		FtpVFS.FtpDirectoryEntry[] entries = listDirectory(path);
+		if (!path.endsWith("/")) {
+			path = path + "/";
+		}
+		// Vector<LsEntry> entries = sftp.ls(path);
+		for (FtpVFS.FtpDirectoryEntry entry : entries) {
+			if (entry.getType() == VFSFile.DIRECTORY) {
+				recursiveDelete(path + entry.getName());
+			} else {
+				removeFile(path + entry.getName());
+			}
+        }
+        client.removeDirectory(path);
+		return client.getResponse().isPositiveCompletion();
+    }
 
 	boolean rename(String from, String to) throws IOException
 	{

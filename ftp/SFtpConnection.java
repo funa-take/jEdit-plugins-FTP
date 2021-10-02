@@ -38,7 +38,9 @@ import javax.swing.JOptionPane;
 import org.gjt.sp.jedit.GUIUtilities;
 import org.gjt.sp.jedit.MiscUtilities;
 import org.gjt.sp.jedit.io.FileVFS;
+import org.gjt.sp.jedit.io.VFSFile;
 import org.gjt.sp.jedit.jEdit;
+import org.gjt.sp.util.Log;
 import org.gjt.sp.util.Log;
 
 import com.jcraft.jsch.Channel;
@@ -53,6 +55,7 @@ import com.jcraft.jsch.SftpException;
 import com.jcraft.jsch.UIKeyboardInteractive;
 import com.jcraft.jsch.UserInfo;
 import com.jcraft.jsch.ConfigRepository;
+import com.jcraft.jsch.ChannelSftp.LsEntry;
 
 import ftp.FtpVFS.FtpDirectoryEntry;
 //}}}
@@ -183,6 +186,13 @@ public class SFtpConnection extends Connection implements UserInfo, UIKeyboardIn
 					if(obj instanceof com.jcraft.jsch.ChannelSftp.LsEntry){
 						//count++;
 						com.jcraft.jsch.ChannelSftp.LsEntry entry = (com.jcraft.jsch.ChannelSftp.LsEntry)obj;
+						
+						if (entry.getFilename().equals(".") 
+							|| entry.getFilename().equals(".."))
+						{
+							continue;
+						}
+						
 						listing.add(createDirectoryEntry(entry.getFilename(), entry.getAttrs()));
 					}
 				}
@@ -231,14 +241,32 @@ public class SFtpConnection extends Connection implements UserInfo, UIKeyboardIn
 	{
 		try
 		{
-			sftp.rmdir(path);
+			// sftp.rmdir(path);
+			recursiveDelete(sftp, path);
 			return true;
 		}
 		catch(SftpException e)
 		{
 			return false;
 		}
-	}//}}}
+	}
+	
+	private void recursiveDelete(ChannelSftp sftp, String path) throws SftpException, IOException {
+		FtpVFS.FtpDirectoryEntry[] entries = listDirectory(path);
+		if (!path.endsWith("/")) {
+			path = path + "/";
+		}
+		// Vector<LsEntry> entries = sftp.ls(path);
+		for (FtpVFS.FtpDirectoryEntry entry : entries) {
+			if (entry.getType() == VFSFile.DIRECTORY) {
+				recursiveDelete(sftp, path + entry.getName());
+			} else {
+				removeFile(path + entry.getName());
+			}
+        }
+        sftp.rmdir(path);
+    }
+	//}}}
 
 	//{{{ rename()
 	boolean rename(String from, String to) throws IOException
