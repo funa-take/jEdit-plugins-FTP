@@ -38,7 +38,9 @@ import javax.swing.JOptionPane;
 import org.gjt.sp.jedit.GUIUtilities;
 import org.gjt.sp.jedit.MiscUtilities;
 import org.gjt.sp.jedit.io.FileVFS;
+import org.gjt.sp.jedit.io.VFSFile;
 import org.gjt.sp.jedit.jEdit;
+import org.gjt.sp.util.Log;
 import org.gjt.sp.util.Log;
 
 import com.jcraft.jsch.Channel;
@@ -249,22 +251,17 @@ public class SFtpConnection extends Connection implements UserInfo, UIKeyboardIn
 		}
 	}
 	
-	private void recursiveDelete(ChannelSftp sftp, String path) throws SftpException {
+	private void recursiveDelete(ChannelSftp sftp, String path) throws SftpException, IOException {
+		FtpVFS.FtpDirectoryEntry[] entries = listDirectory(path);
 		if (!path.endsWith("/")) {
 			path = path + "/";
 		}
-		Vector<LsEntry> entries = sftp.ls(path);
-		for (Object object : entries) {
-			LsEntry entry = (LsEntry) object;
-			if (entry.getFilename().equals(".") 
-				|| entry.getFilename().equals(".."))
-			{
-				continue;
-			}
-			if (entry.getAttrs().isDir()) {
-				recursiveDelete(sftp, path + entry.getFilename());
+		// Vector<LsEntry> entries = sftp.ls(path);
+		for (FtpVFS.FtpDirectoryEntry entry : entries) {
+			if (entry.getType() == VFSFile.DIRECTORY) {
+				recursiveDelete(sftp, path + entry.getName());
 			} else {
-				sftp.rm(path + entry.getFilename());
+				removeFile(path + entry.getName());
 			}
         }
         sftp.rmdir(path);

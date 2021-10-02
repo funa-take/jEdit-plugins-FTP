@@ -373,7 +373,7 @@ public class FtpVFS extends VFS
 		}
 		
 		// falseが返ると固まるため, trueを返す。
-		return false;
+		return true;
 	} //}}}
 	
 	//{{{ _rename() method
