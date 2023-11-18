@@ -368,12 +368,7 @@ public class FtpVFS extends VFS
 		DirectoryCache.clearCachedDirectory(getParentOfPath(url));
 		VFSManager.sendVFSUpdate(this,url,true);
 		
-		if (!returnValue) {
-			Log.log(Log.ERROR, this, "Can't delete directory " + address.getPath());
-		}
-		
-		// falseが返ると固まるため, trueを返す。
-		return true;
+		return returnValue;
 	} //}}}
 	
 	//{{{ _rename() method
