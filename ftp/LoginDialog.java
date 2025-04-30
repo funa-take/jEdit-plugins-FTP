@@ -341,7 +341,8 @@ public class LoginDialog extends EnhancedDialog implements ActionListener
 	{
 		String host = hostField.getText();
 		String user = userField.getText();
-		if(host.indexOf(":") == -1)
+		// if(host.indexOf(":") == -1)
+		if(Util.getPortIndex(host) == -1)
 			host = host + ":" + FtpVFS.getDefaultPort(secure);
 		String key = secure ? ConnectionManager.getStoredFtpKey(host, user) : null;
 		String pass = ConnectionManager.getPassword(host+"."+user);

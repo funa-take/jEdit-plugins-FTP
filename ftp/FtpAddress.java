@@ -81,7 +81,8 @@ public class FtpAddress {
 		}
 
 		// parse domain part
-		pos = domainPart.lastIndexOf(':');
+		// pos = domainPart.lastIndexOf(':');
+		pos = Util.getPortIndex(domainPart);
 		if (pos == -1) {
 			this.host = domainPart;
 			this.port = this.getDefaultPort();
