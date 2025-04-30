@@ -492,7 +492,8 @@ public class ConnectionManager
 			return null;
 		String host = dialog.getHost();
 		int port = FtpVFS.getDefaultPort(secure);
-		int index = host.indexOf(':');
+		// int index = host.indexOf(':');
+		int index = Util.getPortIndex(host);
 		if(index != -1) {
 			try {
 				port = Integer.parseInt(host.substring(index + 1));
